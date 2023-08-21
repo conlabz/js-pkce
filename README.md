@@ -14,6 +14,8 @@ const pkce = new PKCE({
   redirect_uri: 'http://localhost:8080/auth',
   authorization_endpoint: 'https://authserver.com/oauth/authorize',
   token_endpoint: 'https://authserver.com/oauth/token',
+  validation_endpoint: 'https://authserver.com/oauth/validation',
+  logout_endpoint: 'https://authserver.com/oauth/logout',
   requested_scopes: '*',
 });
 ```
@@ -59,6 +61,20 @@ pkce.exchangeForAccessToken(url, additionalParams).then((resp) => {
   const token = resp.access_token;
   // Do stuff with the access token.
 });
+```
+
+To validate a given access token, you can call the `validateAccessToken` method providing it as 
+parameter.
+
+```javascript
+const resonse = pkce.validateAccessToken(token);
+const isValid = resonse.status === 200 && !response.data?.error;
+```
+
+Logout an user is provided by the `logout` method using his access token.
+
+```javascript
+pkce.logout(token);
 ```
 
 ## A note on Storage
