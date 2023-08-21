@@ -4,6 +4,7 @@ import WordArray from 'crypto-js/lib-typedarrays';
 import IAuthResponse from './IAuthResponse';
 import IConfig from './IConfig';
 import IObject from './IObject';
+import IRedirectObject from "./IRedirectObject";
 import ITokenResponse from './ITokenResponse';
 import IValidationResponse from "./IValidationResponse";
 
@@ -21,7 +22,7 @@ export default class PKCE {
   }
 
   /**
-   * Generate the authorize url
+   * Generate the authorization url
    * @param  {object} additionalParams include additional parameters in the query
    * @return Promise<string>
    */
@@ -44,6 +45,25 @@ export default class PKCE {
     ).toString();
 
     return `${this.config.authorization_endpoint}?${queryString}`;
+  }
+
+  /**
+   *
+   * @param {IRedirectObject} additionalParams
+   * @return string
+   */
+  public redirectUrl(additionalParams: IRedirectObject): string {
+    const queryString = new URLSearchParams(
+        Object.assign(
+            {
+              code: additionalParams.code,
+              state: this.getState(additionalParams.state || null),
+            },
+            additionalParams,
+        ),
+    ).toString();
+
+    return `${this.config.redirect_uri}?${queryString}`;
   }
 
   /**
