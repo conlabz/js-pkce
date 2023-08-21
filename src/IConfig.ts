@@ -4,6 +4,7 @@ export default interface IConfig {
   authorization_endpoint: string;
   token_endpoint: string;
   validation_endpoint: string;
+  logout_endpoint: string;
   requested_scopes: string;
   storage?: Storage;
 }

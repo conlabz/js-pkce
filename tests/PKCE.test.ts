@@ -7,6 +7,7 @@ const config = {
   authorization_endpoint: 'https://example.com/auth',
   token_endpoint: 'https://example.com/token',
   validation_endpoint: 'https://example.com/validation',
+  logout_endpoint: 'https://example.com/logout',
   requested_scopes: '*',
 };
 
@@ -168,6 +169,29 @@ describe('Test PKCE token validation', () => {
     await instance.validateAccessToken(accessToken, additionalParams);
   }
 
+});
+
+describe('Test PKCE access token revocation', () => {
+  it('Should make a request to logout endpoint', async () => {
+    const accessToken = 'token';
+    await mockRequest(accessToken);
+
+    expect(fetch.mock.calls.length).toEqual(1);
+    expect(fetch.mock.calls[0][0]).toContain(config.logout_endpoint);
+    expect(fetch.mock.calls[0][0]).toContain('?client_id=' + config.client_id);
+    expect(fetch.mock.calls[0][0]).toContain('&token=' + accessToken);
+  });
+
+  async function mockRequest(token, additionalParams: object = {}) {
+    const instance = new PKCE(config);
+
+    const mockSuccessResponse = {};
+
+    fetch.resetMocks();
+    fetch.mockResponseOnce(JSON.stringify(mockSuccessResponse))
+
+    await instance.logout(token, additionalParams);
+  }
 });
 
 describe('Test storage types', () => {
