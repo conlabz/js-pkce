@@ -14,6 +14,8 @@ const pkce = new PKCE({
   redirect_uri: 'http://localhost:8080/auth',
   authorization_endpoint: 'https://authserver.com/oauth/authorize',
   token_endpoint: 'https://authserver.com/oauth/token',
+  validation_endpoint: 'https://authserver.com/oauth/validation',
+  logout_endpoint: 'https://authserver.com/oauth/logout',
   requested_scopes: '*',
 });
 ```
@@ -70,6 +72,12 @@ pkce.refreshAccessToken(refreshToken).then((resp) => {
   const refreshToken = resp.refresh_token;
   // Do stuff with the access & refresh token.
 });
+```
+
+Logout an user is provided by the `logout` method using his access token.
+
+```javascript
+pkce.logout(token);
 ```
 
 ## A note on Storage

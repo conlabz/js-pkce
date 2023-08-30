@@ -20,7 +20,7 @@ export default class PKCE {
   }
 
   /**
-   * Generate the authorize url
+   * Generate the authorization url
    * @param  {object} additionalParams include additional parameters in the query
    * @return Promise<string>
    */
@@ -47,7 +47,7 @@ export default class PKCE {
 
   /**
    * Given the return url, get a token from the oauth server
-   * @param  url current urlwith params from server
+   * @param  url current url with params from server
    * @param  {object} additionalParams include additional parameters in the request body
    * @return {Promise<ITokenResponse>}
    */
@@ -75,6 +75,26 @@ export default class PKCE {
     });
   }
 
+  /**
+   * Log out for a given access token
+   * @param accessToken
+   * @param {object} additionalParams include additional parameters in the query
+   * @return {Promise<Response>}
+   */
+  public logout(accessToken, additionalParams: IObject = {}): Promise<Response> {
+
+    return fetch(`${this.config.logout_endpoint}?` + new URLSearchParams(
+        Object.assign(
+            {
+              client_id: this.config.client_id,
+              token: `${accessToken}`
+            },
+            additionalParams,
+        ),
+    ), {
+      method: 'GET',
+    }).then((response) => response.json());
+  }
   /**
    * Given a refresh token, return a new token from the oauth server
    * @param  refreshTokens current refresh token from server
@@ -126,7 +146,7 @@ export default class PKCE {
   }
 
   /**
-   * Get the query params as json from a auth response url
+   * Get the query params as json from an auth response url
    * @param  {string} url a url expected to have AuthResponse params
    * @return {Promise<IAuthResponse>}
    */
@@ -166,7 +186,7 @@ export default class PKCE {
 
   /**
    * Validates params from auth response
-   * @param  {AuthResponse} queryParams
+   * @param  {IAuthResponse} queryParams
    * @return {Promise<IAuthResponse>}
    */
   private validateAuthResponse(queryParams: IAuthResponse): Promise<IAuthResponse> {

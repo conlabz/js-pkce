@@ -6,6 +6,7 @@ const config = {
   redirect_uri: 'http://localhost:8080/',
   authorization_endpoint: 'https://example.com/auth',
   token_endpoint: 'https://example.com/token',
+  logout_endpoint: 'https://example.com/logout',
   requested_scopes: '*',
 };
 
@@ -137,51 +138,73 @@ describe('Test PKCE exchange code for token', () => {
 });
 
 describe('Test PCKE refresh token', () => {
-  const refreshToken = 'REFRESH_TOKEN';
+    const refreshToken = 'REFRESH_TOKEN';
 
-  it('Should make a request to token endpoint', async () => {
-    await mockRequest();
+    it('Should make a request to token endpoint', async () => {
+        await mockRequest();
+
+        expect(fetch.mock.calls.length).toEqual(1);
+        expect(fetch.mock.calls[0][0]).toEqual(config.token_endpoint);
+    });
+
+    it('Should request with headers', async () => {
+        await mockRequest();
+        const headers = fetch.mock.calls[0][1].headers;
+
+        expect(headers['Accept']).toEqual('application/json');
+        expect(headers['Content-Type']).toEqual('application/x-www-form-urlencoded;charset=UTF-8');
+    });
+
+    it('Should request with body', async () => {
+        await mockRequest();
+        const body = new URLSearchParams(fetch.mock.calls[0][1].body.toString());
+
+        expect(body.get('grant_type')).toEqual('refresh_token');
+        expect(body.get('client_id')).toEqual(config.client_id);
+        expect(body.get('refresh_token')).toEqual(refreshToken);
+    });
+
+    async function mockRequest() {
+        const instance = new PKCE(config);
+
+        const mockSuccessResponse = {
+            access_token: 'token',
+            expires_in: 123,
+            refresh_expires_in: 234,
+            refresh_token: 'refresh',
+            scope: '*',
+            token_type: 'type',
+        };
+
+        fetch.resetMocks();
+        fetch.mockResponseOnce(JSON.stringify(mockSuccessResponse))
+
+        await instance.refreshAccessToken(refreshToken);
+    }
+});
+
+describe('Test PKCE access token revocation', () => {
+  it('Should make a request to logout endpoint', async () => {
+    const accessToken = 'token';
+    await mockRequest(accessToken);
 
     expect(fetch.mock.calls.length).toEqual(1);
-    expect(fetch.mock.calls[0][0]).toEqual(config.token_endpoint);
+    expect(fetch.mock.calls[0][0]).toContain(config.logout_endpoint);
+    expect(fetch.mock.calls[0][0]).toContain('?client_id=' + config.client_id);
+    expect(fetch.mock.calls[0][0]).toContain('&token=' + accessToken);
   });
 
-  it('Should request with headers', async () => {
-    await mockRequest();
-    const headers = fetch.mock.calls[0][1].headers;
-
-    expect(headers['Accept']).toEqual('application/json');
-    expect(headers['Content-Type']).toEqual('application/x-www-form-urlencoded;charset=UTF-8');
-  });
-
-  it('Should request with body', async () => {
-    await mockRequest();
-    const body = new URLSearchParams(fetch.mock.calls[0][1].body.toString());
-
-    expect(body.get('grant_type')).toEqual('refresh_token');
-    expect(body.get('client_id')).toEqual(config.client_id);
-    expect(body.get('refresh_token')).toEqual(refreshToken);
-  });  
-
-  async function mockRequest() {
+  async function mockRequest(token, additionalParams: object = {}) {
     const instance = new PKCE(config);
 
-    const mockSuccessResponse = {
-      access_token: 'token',
-      expires_in: 123,
-      refresh_expires_in: 234,
-      refresh_token: 'refresh',
-      scope: '*',
-      token_type: 'type',
-    };
+    const mockSuccessResponse = {};
 
     fetch.resetMocks();
     fetch.mockResponseOnce(JSON.stringify(mockSuccessResponse))
 
-    await instance.refreshAccessToken(refreshToken);
-  }  
+    await instance.logout(token, additionalParams);
+  }
 });
-
 
 describe('Test storage types', () => {
   it('Should default to sessionStorage, localStorage emtpy', async () => {
